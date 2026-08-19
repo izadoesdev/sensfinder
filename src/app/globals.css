@@ -1,0 +1,172 @@
+@import "tailwindcss";
+
+/*
+ * Colour system.
+ *
+ * Two stepped ramps, not a bag of one-off hexes. Every step has a job, so a component
+ * never has to invent a shade: pick the step whose job matches. This is what keeps a
+ * border in one component identical to a border in another, and it is why adding a new
+ * component does not add new colours.
+ *
+ *   1–2   page and panel surfaces
+ *   3–4   raised / hover / pressed surfaces
+ *   5–6   borders (resting, hover)
+ *   7–8   disabled and muted text
+ *   9     the solid step — accent-9 is the only saturated fill
+ *   10    solid hover
+ *   11–12 text
+ *
+ * accent-9 (#0099ff) is also the chart series colour. It was run through the
+ * data-viz palette validator against gray-1 and clears the lightness band, chroma
+ * floor, colour-vision-deficiency separation and 3:1 contrast gates — so a blue
+ * number in the report and a blue bar in a chart genuinely mean the same thing.
+ */
+@theme {
+  --color-gray-0: #08090a;
+  --color-gray-1: #0d0e10;
+  --color-gray-2: #121316;
+  --color-gray-3: #17181c;
+  --color-gray-4: #1d1e23;
+  --color-gray-5: #26272d;
+  --color-gray-6: #32333a;
+  --color-gray-7: #4a4b53;
+  --color-gray-8: #6e6f78;
+  --color-gray-9: #8b8c95;
+  --color-gray-10: #a8a9b2;
+  --color-gray-11: #d4d5da;
+  --color-gray-12: #fafafa;
+
+  --color-accent-2: #04121d;
+  --color-accent-3: #062639;
+  --color-accent-4: #07304a;
+  --color-accent-5: #093f61;
+  --color-accent-6: #0b527d;
+  --color-accent-8: #0077cc;
+  --color-accent-9: #0099ff;
+  --color-accent-10: #26a8ff;
+  --color-accent-11: #6cc4ff;
+
+  /* Chart series 2 and 3, validated alongside accent-9. */
+  --color-series-2: #d95926;
+  --color-series-3: #199e70;
+
+  --color-good: #0ca30c;
+  --color-warn: #fab219;
+  --color-crit: #d03b3b;
+
+  /* Semantic aliases — components use these, never raw steps. */
+  --color-page: var(--color-gray-0);
+  --color-panel: var(--color-gray-1);
+  --color-raised: var(--color-gray-2);
+  --color-hover: var(--color-gray-3);
+  --color-border: var(--color-gray-5);
+  --color-border-strong: var(--color-gray-6);
+  --color-text: var(--color-gray-12);
+  --color-text-2: var(--color-gray-10);
+  --color-text-3: var(--color-gray-8);
+
+  /* Tight radii. Large corner radii read as consumer-app; this is an instrument. */
+  --radius-sm: 4px;
+  --radius-md: 5px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+  --radius-2xl: 10px;
+
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --animate-rise: rise 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-hitmark: hitmark 0.22s ease-out both;
+  --animate-pop-in: pop-in 0.14s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-pop-out: pop-out 0.1s ease-in;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hitmark {
+  0% {
+    opacity: 1;
+    transform: scale(0.55);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98) translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pop-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-page);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/*
+ * Chrome is not content. Labels, buttons and numbers in the UI should never
+ * accidentally highlight when someone drags across them — especially in an app whose
+ * whole interaction model is dragging a mouse.
+ */
+button,
+label,
+kbd,
+[role="switch"],
+[role="radio"],
+[role="radiogroup"],
+[role="option"] {
+  user-select: none;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: var(--color-accent-6);
+  color: var(--color-gray-12);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent-9);
+  outline-offset: 2px;
+}
+
+/* Native spinners duplicate the NumberField stepper buttons. */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
