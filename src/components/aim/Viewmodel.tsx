@@ -4,6 +4,7 @@ import { Component, Suspense, useMemo, useRef, type ReactNode } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
+import { SCENE } from "@/lib/theme";
 import type { ShotFeedback } from "./feedback";
 
 /**
@@ -35,9 +36,9 @@ const MODEL_SCALE = 0.17;
 const MODEL_YAW = Math.PI / 2;
 
 const GUNMETAL: Record<string, string> = {
-  Main: "#525b6a",
-  MainDark: "#2b313b",
-  MainLight: "#6f7887",
+  Main: SCENE.weapon.metal,
+  MainDark: SCENE.weapon.dark,
+  MainLight: SCENE.weapon.light,
 };
 
 function Rifle() {
@@ -50,7 +51,7 @@ function Rifle() {
       if (!mesh.isMesh) return;
       const src = mesh.material as THREE.MeshStandardMaterial;
       mesh.material = new THREE.MeshStandardMaterial({
-        color: GUNMETAL[src.name] ?? "#525b6a",
+        color: GUNMETAL[src.name] ?? SCENE.weapon.metal,
         metalness: 0.15,
         roughness: 0.55,
       });
@@ -167,7 +168,7 @@ export function Viewmodel({ feedback }: { feedback: React.RefObject<ShotFeedback
           <mesh>
             <planeGeometry args={[0.12, 0.12]} />
             <meshBasicMaterial
-              color="#ffd9a0"
+              color={SCENE.muzzle.flame}
               transparent
               opacity={0.9}
               blending={THREE.AdditiveBlending}
@@ -178,7 +179,7 @@ export function Viewmodel({ feedback }: { feedback: React.RefObject<ShotFeedback
           <mesh scale={0.45}>
             <planeGeometry args={[0.12, 0.12]} />
             <meshBasicMaterial
-              color="#ffffff"
+              color={SCENE.muzzle.core}
               transparent
               opacity={0.95}
               blending={THREE.AdditiveBlending}
@@ -191,7 +192,7 @@ export function Viewmodel({ feedback }: { feedback: React.RefObject<ShotFeedback
         <pointLight
           ref={flashLight}
           position={[0, 0.04, -0.86]}
-          color="#ffcf8a"
+          color={SCENE.muzzle.light}
           intensity={0}
           distance={4}
           decay={2}

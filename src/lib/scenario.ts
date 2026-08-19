@@ -8,8 +8,17 @@
  * estimated from the spread of repeated attempts at the same condition, so every
  * condition needs enough repetitions to have a standard deviation worth trusting.
  */
+/**
+ * Scenario ids are an explicit union rather than plain strings.
+ *
+ * Adding a drill now fails to compile until every place that switches on a scenario
+ * has been updated — which is the point. A stray `"statik-flick"` used to be a silent
+ * lookup miss at runtime.
+ */
+export type ScenarioId = "static-flick" | "micro-correction";
+
 export interface ScenarioDef {
-  id: string;
+  id: ScenarioId;
   name: string;
   description: string;
   /** Horizontal angular distances to the target, in degrees. */
@@ -42,7 +51,7 @@ export interface ScenarioDef {
  * aim. These sizes keep the index-of-difficulty sweep the analysis needs while staying
  * comfortably visible; `targetScale` lets a player move them further either way.
  */
-export const SCENARIOS: Record<string, ScenarioDef> = {
+export const SCENARIOS: Record<ScenarioId, ScenarioDef> = {
   "static-flick": {
     id: "static-flick",
     name: "Static Flick",
@@ -85,21 +94,36 @@ export function scaleScenario(scenario: ScenarioDef, factor: number): ScenarioDe
   };
 }
 
-export const DEFAULT_SCENARIO = "static-flick";
+export const DEFAULT_SCENARIO: ScenarioId = "static-flick";
+
+/**
+ * A branded key so a condition label cannot be confused with any other string, and so
+ * the encoding lives in one place instead of being re-split by hand at each use.
+ */
+export type ConditionKey = string & { readonly __conditionKey: unique symbol };
+
+export function conditionKey(distance: number, width: number): ConditionKey {
+  return `${distance}|${width}` as ConditionKey;
+}
+
+export function parseConditionKey(key: ConditionKey): { distance: number; width: number } {
+  const [distance, width] = key.split("|").map(Number);
+  return { distance, width };
+}
 
 export interface ShotCondition {
   /** Nominal horizontal distance, degrees. */
   distance: number;
   /** Target angular diameter, degrees. */
   width: number;
-  key: string;
+  key: ConditionKey;
 }
 
 export function conditionsFor(scenario: ScenarioDef): ShotCondition[] {
   const out: ShotCondition[] = [];
   for (const distance of scenario.distances) {
     for (const width of scenario.widths) {
-      out.push({ distance, width, key: `${distance}|${width}` });
+      out.push({ distance, width, key: conditionKey(distance, width) });
     }
   }
   return out;

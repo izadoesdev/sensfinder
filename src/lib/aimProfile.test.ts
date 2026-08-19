@@ -1,5 +1,6 @@
 import { expect, test, describe } from "bun:test";
 import { aimProfile } from "./analysis";
+import { conditionKey } from "./scenario";
 import type { Shot } from "./types";
 
 /**
@@ -29,7 +30,7 @@ function shot(over: Partial<Shot> = {}): Shot {
     distanceA,
     targetW,
     indexOfDifficulty: Math.log2(distanceA / targetW + 1),
-    conditionKey: `${distanceA}|${targetW}`,
+    conditionKey: conditionKey(distanceA, targetW),
     endpointAlong: 0,
     endpointPerp: 0,
     horizontalSign: 1,

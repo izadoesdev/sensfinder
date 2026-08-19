@@ -7,10 +7,11 @@ import { forward } from "@/lib/math3d";
 import { rangeAudio } from "@/lib/audio";
 import { GAMES, type GameId } from "@/lib/games";
 import type { TargetPalette } from "@/lib/palettes";
+import { SCENE } from "@/lib/theme";
 import type { ScenarioDef } from "@/lib/scenario";
 import { cm360 as toCm360, quantiseSens, sensFromCm360 } from "@/lib/sens";
 import type { Shot } from "@/lib/types";
-import { usePointerLock } from "@/hooks/usePointerLock";
+import { usePointerLock, type RawInputStatus } from "@/hooks/usePointerLock";
 import { Scene } from "./Scene";
 import { Hud } from "./Hud";
 import { createFeedback } from "./feedback";
@@ -186,7 +187,7 @@ export function Trainer({
         // frame is a corrupted data point, not just a visual hitch.
         dpr={[1, 1.5]}
       >
-        <color attach="background" args={["#1a1e25"]} />
+        <color attach="background" args={[SCENE.fog]} />
         {scene}
       </Canvas>
 
@@ -244,7 +245,7 @@ function PauseOverlay({
 }: {
   fired: number;
   remaining: number;
-  rawInput: string;
+  rawInput: RawInputStatus;
   gameId: GameId;
   dpi: number;
   sens: number;

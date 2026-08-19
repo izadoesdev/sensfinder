@@ -75,6 +75,9 @@ export function Preview() {
         accuracy: 0.74 + i * 0.02,
         throughput: 3.9 + i * 0.05,
         shots: 66,
+        reactionMs: 232 - i * 6,
+        timePerTargetMs: 610 - i * 18,
+        corrections: 1.9 - i * 0.12,
       });
     }
     return out;

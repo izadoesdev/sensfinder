@@ -6,6 +6,7 @@ import * as THREE from "three";
 import type { AimEngine } from "@/lib/aimEngine";
 import { DEG } from "@/lib/math3d";
 import type { TargetPalette } from "@/lib/palettes";
+import { SCENE } from "@/lib/theme";
 import type { ShotFeedback } from "./feedback";
 
 /**
@@ -74,7 +75,7 @@ function LiveTarget({ engine, palette }: { engine: AimEngine; palette: TargetPal
       <mesh ref={ring} renderOrder={2}>
         <ringGeometry args={[0.88, 1, 32]} />
         <meshBasicMaterial
-          color="#12151a"
+          color={SCENE.targetRim}
           depthTest={false}
           depthWrite={false}
           toneMapped={false}

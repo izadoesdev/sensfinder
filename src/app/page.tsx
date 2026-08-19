@@ -248,6 +248,11 @@ function Setup() {
         <ButtonLink href="/train" variant="primary" size="lg">
           Start <ArrowRight />
         </ButtonLink>
+        {s.history.length > 0 && (
+          <ButtonLink href="/history" variant="secondary" size="lg">
+            {s.history.length} past rounds
+          </ButtonLink>
+        )}
         {!s.inputScaleVerified && (
           <span className="text-[13px] text-text-3">
             Check your DPI first for accurate results.

@@ -12,6 +12,7 @@ import { useEffect, useMemo } from "react";
 import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { DEG } from "@/lib/math3d";
+import { SCENE, SCENE_LIGHTS } from "@/lib/theme";
 import { TARGET_RADIUS } from "./Targets";
 
 /**
@@ -54,7 +55,7 @@ function makeTexture(
 }
 
 function drawWall(ctx: CanvasRenderingContext2D, size: number) {
-  ctx.fillStyle = "#242932";
+  ctx.fillStyle = SCENE.wall.base;
   ctx.fillRect(0, 0, size, size);
 
   for (let i = 0; i < 700; i++) {
@@ -62,10 +63,10 @@ function drawWall(ctx: CanvasRenderingContext2D, size: number) {
     ctx.fillRect(Math.random() * size, Math.random() * size, 1 + Math.random() * 2, 1 + Math.random() * 2);
   }
 
-  ctx.strokeStyle = "#3a424f";
+  ctx.strokeStyle = SCENE.wall.seam;
   ctx.lineWidth = 3;
   ctx.strokeRect(1.5, 1.5, size - 3, size - 3);
-  ctx.strokeStyle = "#2e3540";
+  ctx.strokeStyle = SCENE.wall.inner;
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(size / 2, 0);
@@ -74,7 +75,7 @@ function drawWall(ctx: CanvasRenderingContext2D, size: number) {
   ctx.lineTo(size, size / 2);
   ctx.stroke();
 
-  ctx.fillStyle = "#48515f";
+  ctx.fillStyle = SCENE.wall.stud;
   for (const [x, y] of [
     [14, 14],
     [size - 14, 14],
@@ -92,7 +93,7 @@ function Columns() {
   const mesh = useMemo(() => {
     const height = HEIGHT - 9;
     const geo = new THREE.BoxGeometry(1.2, height, 1.2);
-    const mat = new THREE.MeshBasicMaterial({ color: "#333a46", fog: true });
+    const mat = new THREE.MeshBasicMaterial({ color: SCENE.column, fog: true });
     const inst = new THREE.InstancedMesh(geo, mat, COLUMNS);
     const m = new THREE.Matrix4();
     const y = -EYE_TO_FLOOR + height / 2;
@@ -152,7 +153,7 @@ function Boundary({ yawDeg, pitchDeg }: { yawDeg: number; pitchDeg: number }) {
   return (
     <lineLoop>
       <primitive object={geometry} attach="geometry" />
-      <lineBasicMaterial color="#5b7a9e" transparent opacity={0.5} fog />
+      <lineBasicMaterial color={SCENE.boundary} transparent opacity={0.5} fog />
     </lineLoop>
   );
 }
@@ -172,7 +173,7 @@ export function Environment({
     // Fades to the wall's own tone, not to black, so distance reads as depth rather
     // than as the room ending.
     const prev = scene.fog;
-    scene.fog = new THREE.Fog("#1f242c", 24, 70);
+    scene.fog = new THREE.Fog(SCENE.fog, 24, 70);
     return () => {
       scene.fog = prev;
     };
@@ -202,27 +203,27 @@ export function Environment({
       */}
       <mesh position={[0, -EYE_TO_FLOOR, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[(RADIUS + 6) * 2, (RADIUS + 6) * 2]} />
-        <meshBasicMaterial color="#1f242d" fog />
+        <meshBasicMaterial color={SCENE.floor} fog />
       </mesh>
 
       <mesh position={[0, HEIGHT - EYE_TO_FLOOR - 10, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <planeGeometry args={[(RADIUS + 6) * 2, (RADIUS + 6) * 2]} />
-        <meshBasicMaterial color="#1a1f26" fog />
+        <meshBasicMaterial color={SCENE.ceiling} fog />
       </mesh>
 
       {/* A lit band high on the wall — well above target height, so it adds depth
           without putting a high-contrast edge where targets appear. */}
       <mesh position={[0, 9.5, 0]}>
         <cylinderGeometry args={[RADIUS - 0.8, RADIUS - 0.8, 0.55, 48, 1, true]} />
-        <meshBasicMaterial color="#6d88ad" side={THREE.BackSide} toneMapped={false} />
+        <meshBasicMaterial color={SCENE.lightBand} side={THREE.BackSide} toneMapped={false} />
       </mesh>
 
       <Boundary yawDeg={areaYawDeg} pitchDeg={areaPitchDeg} />
 
       {/* Lights exist only for the weapon — every world material here is unlit. */}
-      <ambientLight intensity={2.2} />
-      <directionalLight position={[-1.2, 2, 1.4]} intensity={2.6} />
-      <directionalLight position={[2, -0.6, -1]} intensity={0.9} color="#7f9fd0" />
+      <ambientLight intensity={SCENE_LIGHTS.ambient} />
+      <directionalLight position={[-1.2, 2, 1.4]} intensity={SCENE_LIGHTS.key} />
+      <directionalLight position={[2, -0.6, -1]} intensity={SCENE_LIGHTS.rim} color={SCENE_LIGHTS.rimColor} />
     </group>
   );
 }

@@ -1,6 +1,6 @@
 import { expect, test, describe } from "bun:test";
 import { AimEngine } from "./aimEngine";
-import { SCENARIOS } from "./scenario";
+import { SCENARIOS, parseConditionKey } from "./scenario";
 import { simulateSession as simulate } from "./simulate";
 import { cm360, degPerCount, degPerCountFromCm360 } from "./sens";
 import {
@@ -227,7 +227,7 @@ describe("play area", () => {
     }
 
     for (const shot of engine.shots) {
-      const nominal = Number(shot.conditionKey.split("|")[0]);
+      const nominal = parseConditionKey(shot.conditionKey).distance;
       // Realised distance is the nominal horizontal leg plus the vertical jitter.
       expect(shot.distanceA).toBeGreaterThanOrEqual(nominal - 1e-9);
       expect(shot.distanceA).toBeLessThanOrEqual(

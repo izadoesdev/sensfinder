@@ -1,3 +1,5 @@
+import type { ConditionKey, ScenarioId } from "./scenario";
+
 /**
  * The data model is the product. Everything logged here is chosen because some
  * downstream statistic needs it — if you drop a field you cannot go back and
@@ -21,7 +23,7 @@ export interface Shot {
   sessionId: string;
   /** Which sensitivity arm this shot belongs to. One block = one sens. */
   blockId: string;
-  scenarioId: string;
+  scenarioId: ScenarioId;
   /** Index within the block — lets us model warm-up and fatigue drift. */
   seq: number;
   /**
@@ -54,7 +56,7 @@ export interface Shot {
    * within a condition, and the *realised* A varies slightly shot to shot because
    * of the vertical jitter — so grouping uses this label, not the realised numbers.
    */
-  conditionKey: string;
+  conditionKey: ConditionKey;
 
   // --- endpoint (degrees, signed, relative to target centre) ---
   /** Along the task axis. Positive = overshoot, negative = undershoot. */
@@ -92,7 +94,7 @@ export interface Shot {
 export interface Session {
   id: string;
   startedAt: number;
-  scenarioId: string;
+  scenarioId: ScenarioId;
   gameId: string;
   dpi: number;
   /** Rendered vertical FOV. Part of the experiment's identity — changing it invalidates history. */

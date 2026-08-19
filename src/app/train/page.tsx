@@ -59,6 +59,9 @@ function TrainSession() {
         accuracy: summary.accuracy,
         throughput: summary.throughput.throughput,
         shots: summary.shots,
+        reactionMs: summary.medianReactionTime,
+        timePerTargetMs: summary.medianTimeToHit,
+        corrections: summary.meanSubmovements,
       });
       setShots(finished);
     },

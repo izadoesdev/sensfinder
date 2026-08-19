@@ -4,7 +4,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { GameId } from "@/lib/games";
 import type { PaletteId } from "@/lib/palettes";
-import { DEFAULT_SCENARIO } from "@/lib/scenario";
+import { DEFAULT_SCENARIO, type ScenarioId } from "@/lib/scenario";
 
 export type Grip = "arm" | "hybrid" | "wrist";
 
@@ -16,7 +16,7 @@ export type Grip = "arm" | "hybrid" | "wrist";
  */
 export interface RoundSummary {
   at: number;
-  scenarioId: string;
+  scenarioId: ScenarioId;
   gameId: GameId;
   dpi: number;
   sens: number;
@@ -27,6 +27,12 @@ export interface RoundSummary {
   accuracy: number;
   throughput: number;
   shots: number;
+  /** Median ms from target appearing to the first movement. */
+  reactionMs: number;
+  /** Median ms from target appearing to the click. */
+  timePerTargetMs: number;
+  /** Mean movements per shot. 1.0 means every flick lands first try. */
+  corrections: number;
 }
 
 interface SettingsState {
@@ -35,7 +41,7 @@ interface SettingsState {
   sens: number;
   padWidthCm: number;
   grip: Grip;
-  scenarioId: string;
+  scenarioId: ScenarioId;
 
   /**
    * Counts-per-event correction factor.
@@ -68,7 +74,7 @@ interface SettingsState {
   setSens: (sens: number) => void;
   setPadWidth: (cm: number) => void;
   setGrip: (grip: Grip) => void;
-  setScenario: (id: string) => void;
+  setScenario: (id: ScenarioId) => void;
   setInputScale: (scale: number, verified: boolean) => void;
   setShowViewmodel: (v: boolean) => void;
   setAudioEnabled: (v: boolean) => void;

@@ -18,6 +18,7 @@ import {
   ArrowRight,
   Badge,
   Button,
+  ButtonLink,
   Card,
   CardHeader,
   Eyebrow,
@@ -214,6 +215,9 @@ export function SessionReport({
 
       <div className="mt-10 flex flex-wrap gap-3">
         <Button onClick={onBack}>Settings</Button>
+        <ButtonLink href="/history" variant="secondary">
+          All rounds
+        </ButtonLink>
         <Button variant="quiet" onClick={exportJson}>
           Export data
         </Button>
