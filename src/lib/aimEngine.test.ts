@@ -11,7 +11,9 @@ import {
   yawPitchFromForward,
   type Vec3,
 } from "./math3d";
-import { calibrationGain, computeThroughput, summarise } from "./analysis";
+import { summarise } from "./analysis";
+import { calibrationGain } from "./calibration";
+import { computeThroughput } from "./fitts";
 
 const DPI = 800;
 const SENS = 0.4;

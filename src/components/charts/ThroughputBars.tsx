@@ -1,6 +1,6 @@
 "use client";
 
-import type { ThroughputResult } from "@/lib/analysis";
+import type { ThroughputResult } from "@/lib/fitts";
 import { niceTicks } from "./axis";
 import { Figure, HoverZone, Plot, Tooltip, useHover } from "./Plot";
 

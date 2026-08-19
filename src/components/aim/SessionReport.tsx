@@ -1,12 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  aimProfile,
-  calibratedCm360,
-  summarise,
-  type CalibrationGain,
-} from "@/lib/analysis";
+import { summarise } from "@/lib/analysis";
+import { calibratedCm360, type CalibrationGain } from "@/lib/calibration";
+import { aimProfile } from "@/lib/profile";
 import { GAMES, type GameId } from "@/lib/games";
 import { quantiseSens, sensFromCm360 } from "@/lib/sens";
 import type { Shot } from "@/lib/types";

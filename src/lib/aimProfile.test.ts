@@ -1,5 +1,5 @@
 import { expect, test, describe } from "bun:test";
-import { aimProfile } from "./analysis";
+import { aimProfile } from "./profile";
 import { conditionKey } from "./scenario";
 import type { Shot } from "./types";
 

@@ -19,7 +19,7 @@ import {
   countDirectionReversals,
   countSubmovements,
   primarySubmovement,
-} from "./analysis";
+} from "./submovements";
 
 export interface EngineConfig {
   sessionId: string;

@@ -22,7 +22,9 @@
  * Run with:  bun run scripts/power-analysis.ts
  */
 
-import { calibrationGain, computeThroughput, mean, stdDev } from "../src/lib/analysis";
+import { calibrationGain } from "../src/lib/calibration";
+import { computeThroughput } from "../src/lib/fitts";
+import { mean, stdDev } from "../src/lib/stats";
 import { SCENARIOS, type ScenarioDef } from "../src/lib/scenario";
 import { cm360, degPerCount } from "../src/lib/sens";
 import { simulateShots } from "../src/lib/simulate";
