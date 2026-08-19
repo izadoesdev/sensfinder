@@ -66,6 +66,14 @@ interface SettingsState {
    * is why cross-session comparisons are only valid at the same scale.
    */
   targetScale: number;
+  /**
+   * Vary target size within a round as well as distance.
+   *
+   * Off by default: it reads as random while you are shooting, and measurably widens
+   * the throughput estimate by splitting the round across more conditions. It is worth
+   * turning on only for the difficulty breakdown in the report.
+   */
+  mixedSizes: boolean;
 
   history: RoundSummary[];
 
@@ -80,6 +88,7 @@ interface SettingsState {
   setAudioEnabled: (v: boolean) => void;
   setPalette: (p: PaletteId) => void;
   setTargetScale: (v: number) => void;
+  setMixedSizes: (v: boolean) => void;
   addRound: (r: RoundSummary) => void;
   clearHistory: () => void;
 }
@@ -101,6 +110,7 @@ export const useSettings = create<SettingsState>()(
       audioEnabled: true,
       palette: "default",
       targetScale: 1,
+      mixedSizes: false,
       history: [],
 
       setGame: (gameId) => set({ gameId }),
@@ -115,6 +125,7 @@ export const useSettings = create<SettingsState>()(
       setAudioEnabled: (audioEnabled) => set({ audioEnabled }),
       setPalette: (palette) => set({ palette }),
       setTargetScale: (targetScale) => set({ targetScale }),
+      setMixedSizes: (mixedSizes) => set({ mixedSizes }),
       addRound: (r) =>
         set((s) => ({ history: [...s.history, r].slice(-MAX_HISTORY) })),
       clearHistory: () => set({ history: [] }),

@@ -7,7 +7,12 @@ import { Hydrated } from "@/components/Hydrated";
 import { SessionReport } from "@/components/aim/SessionReport";
 import { summarise } from "@/lib/analysis";
 import { PALETTES } from "@/lib/palettes";
-import { SCENARIOS, DEFAULT_SCENARIO, scaleScenario } from "@/lib/scenario";
+import {
+  SCENARIOS,
+  DEFAULT_SCENARIO,
+  scaleScenario,
+  withMixedSizes,
+} from "@/lib/scenario";
 import { cm360, degPerCount } from "@/lib/sens";
 import type { Shot } from "@/lib/types";
 import { useSettings } from "@/store/settings";
@@ -32,8 +37,9 @@ function TrainSession() {
   const [shots, setShots] = useState<Shot[] | null>(null);
   const [runId, setRunId] = useState(0);
 
+  const chosen = SCENARIOS[s.scenarioId] ?? SCENARIOS[DEFAULT_SCENARIO];
   const scenario = scaleScenario(
-    SCENARIOS[s.scenarioId] ?? SCENARIOS[DEFAULT_SCENARIO],
+    s.mixedSizes ? withMixedSizes(chosen) : chosen,
     s.targetScale,
   );
   const dpc = degPerCount(s.gameId, s.sens);
@@ -98,7 +104,7 @@ function TrainSession() {
     <Trainer
       // A new scenario or a new sensitivity is a different experiment, not a mutation
       // of the running one — remount so the engine is rebuilt from scratch.
-      key={`${runId}-${scenario.id}-${dpc}-${s.targetScale}`}
+      key={`${runId}-${scenario.id}-${dpc}-${s.targetScale}-${s.mixedSizes}`}
       scenario={scenario}
       gameId={s.gameId}
       dpi={s.dpi}

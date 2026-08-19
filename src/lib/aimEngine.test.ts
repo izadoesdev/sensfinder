@@ -1,6 +1,6 @@
 import { expect, test, describe } from "bun:test";
 import { AimEngine } from "./aimEngine";
-import { SCENARIOS, parseConditionKey } from "./scenario";
+import { SCENARIOS, conditionsFor, parseConditionKey } from "./scenario";
 import { simulateSession as simulate } from "./simulate";
 import { cm360, degPerCount, degPerCountFromCm360 } from "./sens";
 import {
@@ -293,7 +293,9 @@ describe("throughput", () => {
     const tp = computeThroughput(engine.shots.filter((s) => !s.isPostSwitchTransient));
 
     expect(tp.underpowered).toBe(false);
-    expect(tp.conditions.length).toBe(9); // 3 distances x 3 widths
+    // Derived, not hardcoded: the scenario owns how many conditions there are, and a
+    // literal here silently became wrong the moment the drill dropped to one width.
+    expect(tp.conditions.length).toBe(conditionsFor(SCENARIOS["static-flick"]).length);
     expect(Number.isFinite(tp.throughput)).toBe(true);
     expect(tp.throughput).toBeGreaterThan(1);
   });

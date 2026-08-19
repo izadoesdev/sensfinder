@@ -230,6 +230,12 @@ function Setup() {
 
           <div className="grid gap-2 sm:grid-cols-2">
             <SwitchRow
+              checked={s.mixedSizes}
+              onChange={s.setMixedSizes}
+              label="Vary target size"
+              hint="Widens the difficulty breakdown, but feels random"
+            />
+            <SwitchRow
               checked={s.showViewmodel}
               onChange={s.setShowViewmodel}
               label="Show weapon"

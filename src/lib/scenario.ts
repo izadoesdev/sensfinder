@@ -45,19 +45,37 @@ export interface ScenarioDef {
 }
 
 /*
- * Widths sit at the upper end of the study's range rather than the lower end. At 103°
- * horizontal FOV a 1.15° target is about 13 screen pixels on a 1600px-wide viewport —
- * small enough that the task starts measuring eyesight and display quality rather than
- * aim. These sizes keep the index-of-difficulty sweep the analysis needs while staying
- * comfortably visible; `targetScale` lets a player move them further either way.
+ * One target size by default.
+ *
+ * The study varied width as well as distance, and copying that meant the target
+ * changed size on nearly every shot — which reads as random rather than as an
+ * experiment, and buys nothing here. Measured over 200 simulated blocks at 72 shots:
+ * three widths spread the session across nine conditions at eight shots each and made
+ * throughput *less* stable (2.7%% coefficient of variation) than one width at
+ * twenty-four each (2.2%%), while the calibration gain — which regresses on distance,
+ * not width — was unchanged either way.
+ *
+ * Sizes also sit at the upper end of the study range. At 103° FOV its smallest target
+ * is about 13 screen pixels, which measures eyesight rather than aim.
+ *
+ * `MIXED_WIDTHS` restores the spread for anyone who wants the difficulty breakdown.
  */
+export const MIXED_WIDTHS: Record<ScenarioId, number[]> = {
+  "static-flick": [2.0, 3.4, 5.6],
+  "micro-correction": [1.2, 1.8, 2.6],
+};
+
+/** Swap in the full width sweep, widening the difficulty range the report can show. */
+export function withMixedSizes(scenario: ScenarioDef): ScenarioDef {
+  return { ...scenario, widths: MIXED_WIDTHS[scenario.id] };
+}
 export const SCENARIOS: Record<ScenarioId, ScenarioDef> = {
   "static-flick": {
     id: "static-flick",
     name: "Static Flick",
-    description: "Mixed distances and sizes. Start here.",
+    description: "Mixed distances, one target size. Start here.",
     distances: [8, 14, 22],
-    widths: [2.0, 3.4, 5.6],
+    widths: [3.4],
     verticalSpread: 2.8,
     shotCount: 72,
     fovDeg: 103,
@@ -69,7 +87,7 @@ export const SCENARIOS: Record<ScenarioId, ScenarioDef> = {
     name: "Micro Correction",
     description: "Small targets, close range. Harder.",
     distances: [2.5, 4, 6],
-    widths: [1.4, 2.4],
+    widths: [1.8],
     verticalSpread: 1.2,
     shotCount: 60,
     fovDeg: 103,
