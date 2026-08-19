@@ -24,16 +24,47 @@ export interface AimFinding {
  * drawing attention, not clinical cutoffs, and the copy is phrased as observation
  * rather than diagnosis.
  */
+/**
+ * Every threshold in one block.
+ *
+ * These are heuristics for drawing attention, not clinical cutoffs, and they are the
+ * part of this file most likely to change once real sessions exist. Scattered through
+ * the logic as bare numbers they were impossible to review as a set — and impossible to
+ * tell apart from the arithmetic they sat next to.
+ *
+ * The ones expressed as a fraction of target width stay meaningful when a player scales
+ * targets up or down.
+ */
+const T = {
+  /** Below this many scored shots, say nothing at all. */
+  minShots: 20,
+  /** Mean movements per shot: above is hunting, below is a clean stop. */
+  hunting: 1.8,
+  cleanStop: 1.25,
+  /** Shots needed per direction before comparing left against right. */
+  minPerDirection: 8,
+  /** Left/right gap, as a fraction of target width. */
+  asymmetry: 0.25,
+  /** Vertical offset, as a fraction of target width. */
+  vertical: 0.2,
+  /** Shots per difficulty half before comparing them. */
+  minPerHalf: 10,
+  /** Accuracy drop from the easy half to the hard half, in proportion. */
+  falloff: 0.25,
+  /** Share of total shot time spent before the movement starts. */
+  slowStart: 0.55,
+} as const;
+
 export function aimProfile(shots: Shot[]): AimFinding[] {
   const scored = shots.filter((s) => !s.isPostSwitchTransient);
-  if (scored.length < 20) return [];
+  if (scored.length < T.minShots) return [];
 
   const width = median(scored.map((s) => s.targetW));
   const findings: AimFinding[] = [];
 
   // 1. Correction load — how often the first movement is not the last.
   const corrections = mean(scored.map((s) => s.submovementCount));
-  if (corrections >= 1.8) {
+  if (corrections >= T.hunting) {
     findings.push({
       id: "corrections",
       title: "You correct a lot",
@@ -42,7 +73,7 @@ export function aimProfile(shots: Shot[]): AimFinding[] {
         "Most shots take two or more separate movements. That is a stopping problem rather than an aiming one — the flick is arriving, then drifting past and coming back.",
       tone: "warn",
     });
-  } else if (corrections <= 1.25) {
+  } else if (corrections <= T.cleanStop) {
     findings.push({
       id: "corrections",
       title: "Clean stops",
@@ -55,9 +86,9 @@ export function aimProfile(shots: Shot[]): AimFinding[] {
   // 2. Left/right asymmetry — invisible in the pooled figure, common in practice.
   const right = scored.filter((s) => s.horizontalSign > 0).map((s) => s.endpointAlong);
   const left = scored.filter((s) => s.horizontalSign < 0).map((s) => s.endpointAlong);
-  if (right.length >= 8 && left.length >= 8) {
+  if (right.length >= T.minPerDirection && left.length >= T.minPerDirection) {
     const gap = mean(right) - mean(left);
-    if (Math.abs(gap) > width * 0.25) {
+    if (Math.abs(gap) > width * T.asymmetry) {
       const heavy = gap > 0 ? "right" : "left";
       findings.push({
         id: "asymmetry",
@@ -71,7 +102,7 @@ export function aimProfile(shots: Shot[]): AimFinding[] {
 
   // 3. Vertical placement — crosshair height, not sensitivity.
   const vertical = mean(scored.map((s) => s.endpointPerp));
-  if (Math.abs(vertical) > width * 0.2) {
+  if (Math.abs(vertical) > width * T.vertical) {
     findings.push({
       id: "vertical",
       title: `Your shots sit ${vertical > 0 ? "high" : "low"}`,
@@ -85,13 +116,13 @@ export function aimProfile(shots: Shot[]): AimFinding[] {
   // 4. Does it hold up when the shot gets hard?
   const byDifficulty = [...scored].sort((a, b) => a.indexOfDifficulty - b.indexOfDifficulty);
   const half = Math.floor(byDifficulty.length / 2);
-  if (half >= 10) {
+  if (half >= T.minPerHalf) {
     const easy = byDifficulty.slice(0, half);
     const hard = byDifficulty.slice(-half);
     const drop =
       easy.filter((s) => s.hit).length / easy.length -
       hard.filter((s) => s.hit).length / hard.length;
-    if (drop > 0.25) {
+    if (drop > T.falloff) {
       findings.push({
         id: "falloff",
         title: "Hard shots fall off sharply",
@@ -108,9 +139,9 @@ export function aimProfile(shots: Shot[]): AimFinding[] {
     .filter((s) => s.firstMoveTs !== null)
     .map((s) => s.firstMoveTs! - s.spawnTs);
   const total = median(scored.map((s) => s.clickTs - s.spawnTs));
-  if (reactions.length >= 10 && total > 0) {
+  if (reactions.length >= T.minPerHalf && total > 0) {
     const share = median(reactions) / total;
-    if (share > 0.55) {
+    if (share > T.slowStart) {
       findings.push({
         id: "reaction",
         title: "Most of your time is spent starting",
