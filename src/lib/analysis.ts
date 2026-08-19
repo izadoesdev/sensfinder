@@ -21,15 +21,6 @@ export function median(xs: number[]): number {
   return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
 }
 
-export function quantile(xs: number[], q: number): number {
-  if (xs.length === 0) return NaN;
-  const s = [...xs].sort((a, b) => a - b);
-  const pos = (s.length - 1) * q;
-  const lo = Math.floor(pos);
-  const hi = Math.ceil(pos);
-  return lo === hi ? s[lo] : s[lo] + (s[hi] - s[lo]) * (pos - lo);
-}
-
 /* ------------------------------------------------------- trace analysis -- */
 
 /**

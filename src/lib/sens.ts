@@ -11,7 +11,6 @@ import { GAMES, type GameId } from "./games";
  */
 
 const CM_PER_INCH = 2.54;
-const MM_PER_INCH = 25.4;
 
 export function degPerCount(gameId: GameId, sens: number): number {
   return GAMES[gameId].yaw * sens;
@@ -37,10 +36,6 @@ export function degPerCountFromCm360(cm360Value: number, dpi: number): number {
 /** In-game sensitivity that produces the given cm/360 at the given DPI. */
 export function sensFromCm360(gameId: GameId, cm360Value: number, dpi: number): number {
   return degPerCountFromCm360(cm360Value, dpi) / GAMES[gameId].yaw;
-}
-
-export function degPerMm(degPerCountValue: number, dpi: number): number {
-  return (degPerCountValue * dpi) / MM_PER_INCH;
 }
 
 export function edpi(sens: number, dpi: number): number {

@@ -90,14 +90,3 @@ export interface Shot {
 
   trace: TraceSample[];
 }
-
-export interface Session {
-  id: string;
-  startedAt: number;
-  scenarioId: ScenarioId;
-  gameId: string;
-  dpi: number;
-  /** Rendered vertical FOV. Part of the experiment's identity — changing it invalidates history. */
-  fovDeg: number;
-  shots: Shot[];
-}

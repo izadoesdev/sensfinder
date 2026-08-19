@@ -253,5 +253,3 @@ export function HoverZone({
     />
   );
 }
-
-export const PLOT_WIDTH = WIDTH;
