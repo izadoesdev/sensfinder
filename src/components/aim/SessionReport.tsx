@@ -1,7 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { calibratedCm360, summarise, type CalibrationGain } from "@/lib/analysis";
+import {
+  aimProfile,
+  calibratedCm360,
+  summarise,
+  type CalibrationGain,
+} from "@/lib/analysis";
 import { GAMES, type GameId } from "@/lib/games";
 import { quantiseSens, sensFromCm360 } from "@/lib/sens";
 import type { Shot } from "@/lib/types";
@@ -43,6 +48,7 @@ export function SessionReport({
   onBack,
 }: Props) {
   const s = useMemo(() => summarise(shots), [shots]);
+  const profile = useMemo(() => aimProfile(shots), [shots]);
   const [showTable, setShowTable] = useState(false);
   const game = GAMES[gameId];
   const excluded = shots.length - s.shots;
@@ -114,6 +120,45 @@ export function SessionReport({
         <Card className="mt-3">
           <GainScatter shots={shots} gain={s.gain.gain} />
         </Card>
+      )}
+
+      {profile.length > 0 && (
+        <div className="mt-10">
+          <CardHeader
+            title="What else your shots show"
+            hint="Sensitivity is one finding. These come from the same shots and point at things no setting will fix."
+          />
+          <div className="grid gap-2.5 sm:grid-cols-2">
+            {profile.map((f) => (
+              <div
+                key={f.id}
+                className={`rounded-lg border p-4 ${
+                  f.tone === "warn"
+                    ? "border-warn/35 bg-warn/[0.06]"
+                    : f.tone === "good"
+                      ? "border-good/35 bg-good/[0.06]"
+                      : "border-gray-4 bg-panel"
+                }`}
+              >
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-[14px] font-medium text-text">{f.title}</span>
+                  <span
+                    className={`shrink-0 font-mono text-[15px] tabular ${
+                      f.tone === "warn"
+                        ? "text-warn"
+                        : f.tone === "good"
+                          ? "text-good"
+                          : "text-text-2"
+                    }`}
+                  >
+                    {f.value}
+                  </span>
+                </div>
+                <p className="mt-2 text-[13px] leading-relaxed text-text-3">{f.detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       <div className="mt-10">

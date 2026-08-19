@@ -52,6 +52,7 @@ interface ActiveShot {
   axisAtSpawn: Vec3;
   /** Tangent direction at the target, pointing *away* from spawn, so +along = overshoot. */
   axisAtTarget: Vec3;
+  hSign: 1 | -1;
   distanceA: number;
   firstMoveTs: number | null;
   pathLengthDeg: number;
@@ -185,6 +186,7 @@ export class AimEngine {
 
       endpointAlong: endpoint.along,
       endpointPerp: endpoint.perp,
+      horizontalSign: a.hSign,
 
       pathLengthDeg: a.pathLengthDeg,
       overshootRatio: a.distanceA > 0 ? a.peakAlong / a.distanceA : 0,
@@ -309,7 +311,8 @@ export class AimEngine {
     // random. Distance is what the experiment controls, direction is free, so steering
     // direction costs the measurement nothing and stops the player being walked in
     // circles by a run of same-side spawns.
-    const horizontal = condition.distance * this.horizontalSign(rand);
+    const hSign = this.horizontalSign(rand);
+    const horizontal = condition.distance * hSign;
     const vertical = this.verticalOffset(rand);
     const distanceA = Math.hypot(horizontal, vertical);
     const bearing = Math.atan2(vertical, horizontal);
@@ -327,6 +330,7 @@ export class AimEngine {
       axisAtSpawn,
       axisAtTarget,
       distanceA,
+      hSign: hSign > 0 ? 1 : -1,
       firstMoveTs: null,
       pathLengthDeg: 0,
       peakAlong: 0,

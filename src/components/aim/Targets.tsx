@@ -8,38 +8,44 @@ import { DEG } from "@/lib/math3d";
 import type { TargetPalette } from "@/lib/palettes";
 import type { ShotFeedback } from "./feedback";
 
-/** Distance from the eye to every target. Only the angle it subtends matters. */
-const TARGET_RADIUS = 20;
-const EFFECT_MS = 260;
+/**
+ * Distance from the eye to every target.
+ *
+ * Only the angle a target subtends matters to the task, so this is purely a staging
+ * choice — and it is exported so the play-area frame can be drawn at the same depth.
+ * Drawn out on the far wall instead, the frame reads as a distant window rather than
+ * as the area you are actually shooting into.
+ */
+export const TARGET_RADIUS = 20;
+const HIT_MS = 190;
+const MISS_MS = 620;
 
 /** World radius of a disc that subtends `angularWidthDeg` at TARGET_RADIUS. */
 function worldRadius(angularWidthDeg: number): number {
   return TARGET_RADIUS * Math.tan((angularWidthDeg / 2) * DEG);
 }
 
+
 /**
  * The live target: a disc turned to face the eye, not a sphere.
  *
- * A sphere renders 768 triangles to produce a silhouette a 32-triangle disc gives
- * exactly — the outline is a circle of the same angular size either way. The disc is
- * also crisper, because a sphere's edge is shaded by its own curvature and goes soft
- * at small sizes, right where legibility matters most.
+ * A sphere renders 768 triangles for a silhouette a 32-triangle disc gives exactly —
+ * the outline is a circle of the same angular size either way — and a sphere's edge is
+ * shaded by its own curvature, going soft at small sizes where legibility matters most.
  *
- * Flat and unlit on purpose: a shaded target changes contrast as it moves relative to
- * a light, which changes how fast it can be seen — a confound sitting directly on the
- * effect being measured. No halo either, since it would make the target read as larger
- * than its hit area. The spawn animation is opacity-only for the same reason.
+ * It appears instantly. An opacity ramp on spawn reads as a pulse right after the
+ * previous target dies, and "is it there yet" is not a question a reaction-time
+ * measurement should have to answer.
  */
 function LiveTarget({ engine, palette }: { engine: AimEngine; palette: TargetPalette }) {
   const mesh = useRef<THREE.Mesh>(null);
   const material = useRef<THREE.MeshBasicMaterial>(null);
   const ring = useRef<THREE.Mesh>(null);
-  const ringMat = useRef<THREE.MeshBasicMaterial>(null);
   const color = useMemo(() => new THREE.Color(palette.target), [palette.target]);
 
   useFrame(() => {
     const m = mesh.current;
-    if (!m || !material.current || !ring.current || !ringMat.current) return;
+    if (!m || !material.current || !ring.current) return;
 
     const dir = engine.targetDir;
     if (!dir) {
@@ -54,32 +60,21 @@ function LiveTarget({ engine, palette }: { engine: AimEngine; palette: TargetPal
     const r = worldRadius(engine.currentWidth);
     m.scale.setScalar(r);
     ring.current.scale.setScalar(r);
-
-    const opacity = Math.min(1, (performance.now() - engine.activeSpawnTs) / 55);
     material.current.color.copy(color);
-    material.current.opacity = opacity;
-    ringMat.current.opacity = opacity * 0.9;
   });
 
   return (
     <mesh ref={mesh} visible={false} renderOrder={2}>
       <circleGeometry args={[1, 32]} />
-      <meshBasicMaterial
-        ref={material}
-        transparent
-        opacity={0}
-        toneMapped={false}
-        depthTest={false}
-      />
-      {/* A dark rim drawn *inside* the silhouette. It sharpens the edge against any
+      {/* depthTest off so the viewmodel can never hide a target: a shot you could not
+          see is a broken trial, not a hard one. */}
+      <meshBasicMaterial ref={material} toneMapped={false} depthTest={false} />
+      {/* A dark rim drawn *inside* the silhouette — sharpens the edge against any
           background without making the target read as bigger than its hit area. */}
       <mesh ref={ring} renderOrder={2}>
         <ringGeometry args={[0.88, 1, 32]} />
         <meshBasicMaterial
-          ref={ringMat}
           color="#12151a"
-          transparent
-          opacity={0}
           depthTest={false}
           depthWrite={false}
           toneMapped={false}
@@ -90,13 +85,20 @@ function LiveTarget({ engine, palette }: { engine: AimEngine; palette: TargetPal
 }
 
 /**
- * Hit and miss feedback, driven off the shared feedback ref rather than React state so
- * it starts on the very next frame without re-rendering anything.
+ * Hit and miss feedback.
  *
- * Hit and miss differ by shape as well as colour — a hit blooms with a filled core, a
- * miss leaves a hollow ring — so the distinction survives every colour-vision
- * deficiency. The miss marker is information, not decoration: over a session its
- * scatter is the endpoint distribution the analysis works from.
+ * Driven off the shared feedback ref rather than React state, so it starts on the very
+ * next frame without re-rendering anything.
+ *
+ * A hit throws a ring outward from where the target stood; a miss leaves a small mark
+ * exactly where the crosshair was. Different shapes, different motion — the distinction
+ * survives every colour-vision deficiency without relying on hue.
+ *
+ * Neither uses additive blending. An additive bloom over the spot you were just looking
+ * at reads as a flash on every single hit, which is exhausting over seventy shots and
+ * masks the next target's appearance. The miss mark also lingers longer than the hit
+ * ring, because it is information: its scatter across a session *is* the endpoint
+ * distribution the analysis works from.
  */
 function ShotEffects({
   feedback,
@@ -107,36 +109,39 @@ function ShotEffects({
 }) {
   const group = useRef<THREE.Group>(null);
   const ring = useRef<THREE.Mesh>(null);
-  const core = useRef<THREE.Mesh>(null);
+  const mark = useRef<THREE.Mesh>(null);
   const ringMat = useRef<THREE.MeshBasicMaterial>(null);
-  const coreMat = useRef<THREE.MeshBasicMaterial>(null);
+  const markMat = useRef<THREE.MeshBasicMaterial>(null);
 
   const hitColor = useMemo(() => new THREE.Color(palette.hit), [palette.hit]);
   const missColor = useMemo(() => new THREE.Color(palette.miss), [palette.miss]);
 
   const seen = useRef(0);
   const startedAt = useRef(-1);
+  const wasHit = useRef(false);
   const baseScale = useRef(1);
 
   useFrame(() => {
     const g = group.current;
-    if (!g || !ringMat.current || !coreMat.current || !ring.current || !core.current) return;
+    if (!g || !ringMat.current || !markMat.current || !ring.current || !mark.current) return;
 
     const fb = feedback.current;
 
     if (fb.seq !== seen.current) {
       seen.current = fb.seq;
       startedAt.current = performance.now();
+      wasHit.current = fb.hit;
 
       const dir = fb.hit && fb.deadDir ? fb.deadDir : fb.impact;
       g.position.set(dir[0] * TARGET_RADIUS, dir[1] * TARGET_RADIUS, dir[2] * TARGET_RADIUS);
       g.lookAt(0, 0, 0);
 
-      baseScale.current = fb.hit ? worldRadius(fb.deadWidth) : worldRadius(0.7);
-      const colour = fb.hit ? hitColor : missColor;
-      ringMat.current.color.copy(colour);
-      coreMat.current.color.copy(colour);
-      core.current.visible = fb.hit;
+      baseScale.current = worldRadius(fb.hit ? fb.deadWidth : 0.55);
+      ringMat.current.color.copy(fb.hit ? hitColor : missColor);
+      markMat.current.color.copy(missColor);
+      ring.current.visible = fb.hit;
+      mark.current.visible = !fb.hit;
+      mark.current.scale.setScalar(baseScale.current);
     }
 
     if (startedAt.current < 0) {
@@ -144,26 +149,29 @@ function ShotEffects({
       return;
     }
 
-    const t = (performance.now() - startedAt.current) / EFFECT_MS;
-    if (t >= 1) {
+    const elapsed = performance.now() - startedAt.current;
+    const life = wasHit.current ? HIT_MS : MISS_MS;
+    if (elapsed >= life) {
       g.visible = false;
       return;
     }
 
     g.visible = true;
-    const ease = 1 - Math.pow(1 - t, 3);
-    const fade = Math.pow(1 - t, 1.6);
+    const t = elapsed / life;
 
-    ring.current.scale.setScalar(baseScale.current * (1 + ease * 2.2));
-    ringMat.current.opacity = fade * 0.95;
-    core.current.scale.setScalar(baseScale.current * (1 - ease * 0.55));
-    coreMat.current.opacity = fade * 0.8;
+    if (wasHit.current) {
+      const ease = 1 - Math.pow(1 - t, 3);
+      ring.current.scale.setScalar(baseScale.current * (1 + ease * 1.4));
+      ringMat.current.opacity = Math.pow(1 - t, 1.4) * 0.9;
+    } else {
+      markMat.current.opacity = Math.pow(1 - t, 2) * 0.8;
+    }
   });
 
   return (
     <group ref={group} visible={false} renderOrder={3}>
       <mesh ref={ring}>
-        <ringGeometry args={[0.8, 1, 32]} />
+        <ringGeometry args={[0.86, 1, 32]} />
         <meshBasicMaterial
           ref={ringMat}
           transparent
@@ -171,19 +179,17 @@ function ShotEffects({
           side={THREE.DoubleSide}
           depthWrite={false}
           depthTest={false}
-          blending={THREE.AdditiveBlending}
           toneMapped={false}
         />
       </mesh>
-      <mesh ref={core}>
-        <circleGeometry args={[1, 24]} />
+      <mesh ref={mark}>
+        <circleGeometry args={[1, 20]} />
         <meshBasicMaterial
-          ref={coreMat}
+          ref={markMat}
           transparent
           opacity={0}
           depthWrite={false}
           depthTest={false}
-          blending={THREE.AdditiveBlending}
           toneMapped={false}
         />
       </mesh>

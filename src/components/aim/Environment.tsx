@@ -12,6 +12,7 @@ import { useEffect, useMemo } from "react";
 import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { DEG } from "@/lib/math3d";
+import { TARGET_RADIUS } from "./Targets";
 
 /**
  * The range.
@@ -26,10 +27,13 @@ import { DEG } from "@/lib/math3d";
  * target contrast would vary with it too.
  */
 
-const RADIUS = 48;
-const HEIGHT = 62;
-const EYE_TO_FLOOR = 12;
-const COLUMNS = 24;
+// Pulled in from a 48-unit stadium. Targets sit 20 units out, so a wall four times
+// further made the whole range read as distant and the play area as a small window in
+// it. Closer wall, same angular task — nothing the measurement sees has changed.
+const RADIUS = 27;
+const HEIGHT = 34;
+const EYE_TO_FLOOR = 7;
+const COLUMNS = 18;
 
 function makeTexture(
   draw: (ctx: CanvasRenderingContext2D, size: number) => void,
@@ -86,7 +90,7 @@ function drawWall(ctx: CanvasRenderingContext2D, size: number) {
 /** Vertical ribs. Evenly spaced so no direction is privileged; one draw call for all. */
 function Columns() {
   const mesh = useMemo(() => {
-    const height = HEIGHT - 16;
+    const height = HEIGHT - 9;
     const geo = new THREE.BoxGeometry(1.2, height, 1.2);
     const mat = new THREE.MeshBasicMaterial({ color: "#333a46", fog: true });
     const inst = new THREE.InstancedMesh(geo, mat, COLUMNS);
@@ -94,7 +98,9 @@ function Columns() {
     const y = -EYE_TO_FLOOR + height / 2;
 
     for (let i = 0; i < COLUMNS; i++) {
-      const a = (i / COLUMNS) * Math.PI * 2;
+      // Offset by half a step so no column ever sits dead centre — a vertical bar
+      // directly behind the crosshair competes with the target for attention.
+      const a = ((i + 0.5) / COLUMNS) * Math.PI * 2;
       m.makeRotationY(-a);
       m.setPosition(Math.sin(a) * (RADIUS - 0.8), y, Math.cos(a) * (RADIUS - 0.8));
       inst.setMatrixAt(i, m);
@@ -122,7 +128,9 @@ function Columns() {
  */
 function Boundary({ yawDeg, pitchDeg }: { yawDeg: number; pitchDeg: number }) {
   const geometry = useMemo(() => {
-    const r = RADIUS - 1.4;
+    // Drawn at target depth, not on the wall: the frame marks the area you are
+    // shooting into, and out on the wall it read as a window somewhere behind it.
+    const r = TARGET_RADIUS + 0.3;
     const at = (yaw: number, pitch: number) => {
       const y = yaw * DEG;
       const p = pitch * DEG;
@@ -158,13 +166,13 @@ export function Environment({
 }) {
   const scene = useThree((s) => s.scene);
 
-  const wall = useMemo(() => makeTexture(drawWall, [20, 6]), []);
+  const wall = useMemo(() => makeTexture(drawWall, [14, 5]), []);
 
   useEffect(() => {
     // Fades to the wall's own tone, not to black, so distance reads as depth rather
     // than as the room ending.
     const prev = scene.fog;
-    scene.fog = new THREE.Fog("#1f242c", 40, 110);
+    scene.fog = new THREE.Fog("#1f242c", 24, 70);
     return () => {
       scene.fog = prev;
     };
@@ -204,8 +212,8 @@ export function Environment({
 
       {/* A lit band high on the wall — well above target height, so it adds depth
           without putting a high-contrast edge where targets appear. */}
-      <mesh position={[0, 16, 0]}>
-        <cylinderGeometry args={[RADIUS - 1.4, RADIUS - 1.4, 0.9, 48, 1, true]} />
+      <mesh position={[0, 9.5, 0]}>
+        <cylinderGeometry args={[RADIUS - 0.8, RADIUS - 0.8, 0.55, 48, 1, true]} />
         <meshBasicMaterial color="#6d88ad" side={THREE.BackSide} toneMapped={false} />
       </mesh>
 

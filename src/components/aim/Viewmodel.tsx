@@ -31,7 +31,7 @@ const MODEL_URL = "/models/rifle.glb";
  *    reflections, and with no environment map in this scene there is nothing to
  *    reflect, so the original values render as a black silhouette
  */
-const MODEL_SCALE = 0.135;
+const MODEL_SCALE = 0.17;
 const MODEL_YAW = Math.PI / 2;
 
 const GUNMETAL: Record<string, string> = {
@@ -63,7 +63,7 @@ function Rifle() {
       object={model}
       scale={MODEL_SCALE}
       rotation={[0, MODEL_YAW, 0]}
-      position={[0, 0, -0.34]}
+      position={[0, 0, -0.24]}
     />
   );
 }
@@ -136,9 +136,9 @@ export function Viewmodel({ feedback }: { feedback: React.RefObject<ShotFeedback
     const idle = Math.sin(clock.current * 1.6) * 0.0013;
 
     r.position.set(
-      0.235 + sway.current.x,
-      -0.30 + sway.current.y + idle - kick * 0.008,
-      -0.42 + kick * 0.045,
+      0.215 + sway.current.x,
+      -0.235 + sway.current.y + idle - kick * 0.008,
+      -0.3 + kick * 0.05,
     );
     r.rotation.set(
       -0.03 + kick * 0.24 + sway.current.y * 0.8,
@@ -163,7 +163,7 @@ export function Viewmodel({ feedback }: { feedback: React.RefObject<ShotFeedback
           </Suspense>
         </ModelBoundary>
 
-        <group ref={flash} position={[0, 0.02, -0.78]} visible={false}>
+        <group ref={flash} position={[0, 0.03, -0.86]} visible={false}>
           <mesh>
             <planeGeometry args={[0.12, 0.12]} />
             <meshBasicMaterial
@@ -190,7 +190,7 @@ export function Viewmodel({ feedback }: { feedback: React.RefObject<ShotFeedback
 
         <pointLight
           ref={flashLight}
-          position={[0, 0.03, -0.78]}
+          position={[0, 0.04, -0.86]}
           color="#ffcf8a"
           intensity={0}
           distance={4}

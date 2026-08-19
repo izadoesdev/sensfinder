@@ -59,8 +59,16 @@ export interface Shot {
   // --- endpoint (degrees, signed, relative to target centre) ---
   /** Along the task axis. Positive = overshoot, negative = undershoot. */
   endpointAlong: number;
-  /** Perpendicular to the task axis. */
+  /** Perpendicular to the task axis. Positive = high, negative = low. */
   endpointPerp: number;
+  /**
+   * Which way the flick went: +1 for a target to the right, -1 to the left.
+   *
+   * Endpoint error is measured along the task axis, so an overshoot reads positive
+   * whichever way you turned — which hides the most common asymmetry in aim, where a
+   * player overshoots one direction and undershoots the other.
+   */
+  horizontalSign: 1 | -1;
 
   // --- movement quality ---
   /** Total angular path travelled. Efficiency = distanceA / pathLengthDeg. */
