@@ -273,7 +273,7 @@ Structured telemetry summary in → explanation out. That's a Claude API call (`
 
 ### V1 — "Find" (the actual product)
 - Accounts, session history, cross-session trend
-- **The 15-minute optimizer session:** interleaved blocks, GP fit, live posterior chart
+- **The optimizer session:** interleaved blocks, GP fit, live posterior chart. Budget **30–45 minutes**, not 15 — see §13. Likely split across two sittings.
 - Output: point estimate + credible interval + **plateau**
 - Multi-game support (CS2, Apex, OW2, Fortnite) with verified yaw table + converter
 - Strafe-track scenario (tracking optimum ≠ clicking optimum — surface both)
@@ -321,7 +321,7 @@ That validation metric is the one that decides whether the product is real. Inst
 
 ## 12. Open questions
 
-1. **How many trials per arm are actually needed** to resolve a 5% throughput difference at realistic human variance? → Simulate this before building the optimizer. A quick Monte Carlo with plausible σ tells you whether the 15-minute session is even feasible, or whether it needs to be 40 minutes or spread across days. **Do this first; it can kill or reshape V1.**
+1. ~~**How many trials per arm are actually needed** to resolve a 5% throughput difference at realistic human variance?~~ **ANSWERED — see §13.**
 2. Does the calibration gain (Signal A) converge to the throughput optimum (Signal B) over weeks, or are they persistently different quantities?
 3. Is tracking sens optimum systematically higher than clicking sens optimum, and by how much? Determines whether we recommend one number or a compromise.
 4. Should the recommendation be a *destination* (jump there) or a *ramp* (5% per week)? Motor adaptation literature suggests gradual, but big jumps give a clearer product moment.
@@ -348,3 +348,62 @@ That validation metric is the one that decides whether the product is real. Inst
 - [Getting started with Voltaic](https://voltaic.medium.com/getting-started-with-voltaic-20fa06c65342)
 - [3D Aim Trainer — Sensitivity Finder (competitor)](https://www.3daimtrainer.com/sensitivity-finder/)
 - [VALORANT Sensitivity Converter — mouse-sensitivity.com](https://www.mouse-sensitivity.com/n/valorant/)
+
+---
+
+## 13. Power analysis — the answer to §12 Q1
+
+Run with `bun run scripts/power-analysis.ts`. Method: drive the real engine with the
+scripted player from `simulate.ts`, 120 independent blocks per cell, and measure how far
+the resulting statistic moves block to block. That spread is the measurement noise, and
+it sets the smallest difference the design can detect (α 0.05 two-sided, power 0.80,
+paired within-player).
+
+**The noise model is a guess** — no human has shot a session yet — so the sweep is over
+a range of plausible endpoint scatter. When real telemetry exists, measure the player's
+actual scatter and read off the matching row.
+
+### A. Calibration gain — the MVP is sound
+
+Smallest bias a single block can resolve:
+
+| endpoint noise | 45 shots | 72 shots | 108 shots | 216 shots |
+|---|---|---|---|---|
+| 0.5° | 1.2% | **1.0%** | 0.7% | 0.5% |
+| 1.0° | 2.5% | **2.0%** | 1.5% | 1.0% |
+| 1.5° | 3.7% | **2.9%** | 2.2% | 1.4% |
+| 2.5° | 6.2% | **4.9%** | 3.7% | 2.4% |
+
+The shipped 72-shot block resolves a 2–5% bias. Real biases worth acting on are 5–12%,
+so **the MVP's block size is comfortably adequate** even at the pessimistic end. No
+change needed.
+
+### B. Throughput — V1's 15-minute session does not survive
+
+Total shots per arm to resolve a 5% throughput difference:
+
+| endpoint noise | 45 shots/block | 108 shots/block | best | 6-arm sweep |
+|---|---|---|---|---|
+| 0.5° | 2,295 | 216 | 144 | ~22 min |
+| 1.0° | 3,240 | 216 | 216 | ~32 min |
+| 1.5° | 4,095 | 324 | 288 | ~43 min |
+| 2.5° | 5,490 | 432 | 432 | ~65 min |
+
+Three findings:
+
+1. **15 minutes was wrong.** Only the most optimistic noise level gets a 6-arm sweep
+   near 20 minutes. Plan for 30–45, or fewer arms.
+2. **Never use 45-shot blocks for throughput.** At 45 shots each condition gets exactly
+   5 repetitions, and effective width estimated from n=5 is so unstable it inflates the
+   requirement by an order of magnitude. **108 shots per block is the floor**; the cost
+   is roughly flat above it, so there is no reason to go below.
+3. **The fixed-arm design is the problem, not the objective.** Spending equal trials on
+   six arms wastes most of them on sensitivities already known to be poor. This is the
+   case Bayesian optimisation exists for — allocate adaptively, and the same information
+   should come from materially fewer shots. Quantifying that saving is the next
+   simulation to run, and it should happen before any optimiser UI is built.
+
+**Caveat:** the simulated player's absolute throughput is unrealistically high (it hits
+nearly everything), so these numbers lean on the *coefficient of variation* rather than
+the absolute level. That is the right invariant for a power calculation, but it should
+be re-derived from real telemetry once a human session exists.
